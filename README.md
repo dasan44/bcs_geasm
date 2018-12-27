@@ -1,9 +1,9 @@
 # bcs_geasm
-Barcode Scanner reader pour le GEASM
+Scanner de codes barres pour le GEASM
 
 Système de gestion entrées / sorties de matériels de plongée
 
-lecteur de code bar usb YHD-8200
+lecteur de codes barres usb YHD-8200
 
 - python
 - mysql
