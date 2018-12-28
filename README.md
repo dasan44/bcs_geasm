@@ -11,5 +11,3 @@ lecteur de codes barres usb YHD-8200
 fonctionne sur raspberry-pi
 
 version 1.0 - Dec 2018
-
-- prérequis : libusb
