@@ -15,8 +15,7 @@ import mysql.connector
 
 
 # SI SCAN MATERIEL UNIQUEMENT ET QUE LE MATERIEL EST SORTI => UPDATE MATERIEL pour PASSER A IN AU LIEU DE OUT
-	# reste à faire : mettre à jour la table MOUVEMENTS
-	
+# reste à faire : mettre à jour la table MOUVEMENTS
 # RESTE A FAIRE LA PARTIE EMPRUNT DE MATERIEL
 
 ficBinMysql='mysql.bin'
