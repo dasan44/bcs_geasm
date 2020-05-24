@@ -41,6 +41,7 @@
 # Script cherche wifi/connection internet + upload bakcup mysql vers geasm.org
 # Print des actions
 # enregistrer les codes barre non trouves en base (fichier inconnus.log)
+# envoyer un rapport espace disque # cron
 
 import time
 import sys
@@ -51,15 +52,21 @@ from datetime import date, datetime, timedelta
 import mysql.connector
 
 ficBinMysql='fichiersortie.bin'
+varficLogs='scann_geasm.log'
 action='scan'
 id_memb='aucun'
 
 def interruptProg():
+    global fLogs
+    fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : Arret du programme\r")
+    fLogs.close()
     #print ("Fermeture de l'application")
     exit()
 
 def connexionDB():
     # fonction de connexion a la base de donnee
+    print("fonction connexionDB()")
+    global fLogs
     global mydb
     global mycursor
     from cryptography.fernet import Fernet
@@ -80,12 +87,15 @@ def connexionDB():
          auth_plugin='mysql_native_password')
         mycursor = mydb.cursor()
     except mysql.connector.Error as err:
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
         interruptProg()
 
 # traitement retour du materiel
 def retour_materiel(id_materiel, id_mvt):
     # fonction retour du materiel
+    print("fonction retour_materiel()")
+    global fLogs
     global mydb
     global mycursor
     try:
@@ -116,6 +126,7 @@ def retour_materiel(id_materiel, id_mvt):
         #else:
         #    print("ERREUR UPDATE MVT!!!")
     except mysql.connector.Error as err:
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
         interruptProg()
 	#mettre a jour la table materiel (statut = in au lieu de out)
@@ -125,6 +136,9 @@ def retour_materiel(id_materiel, id_mvt):
 def scan_windows():
     # fonction scanner sur os windows
     # fonction de base qui tourne en boucle pour scanner les codes barres
+    print("fonction scan_windows()")
+    global fLogs
+    fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : OS Windows\r")
     global action
     global id_memb
     global mydb
@@ -134,6 +148,7 @@ def scan_windows():
         while True:
             if msvcrt.kbhit():
                 if action == 'emprunt':
+                    print("fonction scan_windows() action = emprunt")
                     # ajout une entree dans la table mvts_materiels
                     # update table materiel ==> materiel = out
                     # reset de la variable action pour le prochain scan
@@ -172,7 +187,10 @@ def scan_windows():
                             requete_base("INSERT INTO mvts_materiels (id_mvt,id_materiel,id_membre,date_emprunt) VALUES ('%s','%s','%s','%s')" % (id_mvt_calc,varToSearch,id_memb,dateretourcalc), 'insert', id_mvt_calc)
 					        # mise a jour table materiel
                             requete_base("UPDATE materiels SET statut = 'out', id_mvt = '%s' WHERE id_materiel = '%s'" % (id_mvt_calc,varToSearch), 'update', varToSearch)
+                        else:
+                            fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - WARNING : Code barre inconnu = " + str(varToSearch) + "\r")
                     except mysql.connector.Error as err:
+                        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
                         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
                         interruptProg()
                 else:
@@ -182,15 +200,20 @@ def scan_windows():
                     # le premier caracetere n'est pas interprete
                     # suppression des crochets et des '
                     # resultat code barre = 23456
+                    print("fonction scan_windows() action = scan")
                     key_stroke = list(input(msvcrt.getch().decode('ascii')).split())
                     varToSearch = str(key_stroke).replace('[', '').replace(']','').replace('\'', '')
                     requete_base("SELECT id_membre FROM membres where id_membre = '" + str(varToSearch) + "'", 'membre', varToSearch)
     except KeyboardInterrupt:
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : interruption clavier\r")
         interruptProg()
 
 def scan_linux():
     # fonction scanner sur os linux
     # fonction de base qui tourne en boucle pour scanner les codes barres
+    print("fonction scan_linux()")
+    global fLogs
+    fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : OS Linux\r")
     global action
     global id_memb
     global mydb
@@ -199,6 +222,7 @@ def scan_linux():
     try:
         while True:
             if action == 'emprunt':
+                print("fonction scan_windows() action = emprunt")
                 # ajout une entree dans la table mvts_materiels
                 # update table materiel ==> materiel = out
                 # reset de la variable action pour le prochain scan
@@ -234,7 +258,6 @@ def scan_linux():
                             rc = mycursor.rowcount
                             mycursor.close()
                             mydb.close()
-                            
                             for row in myresult:
                                 # incrementation pour table mouvement
                                 id_mvt_calc = int(row[0])+1
@@ -242,10 +265,14 @@ def scan_linux():
                             requete_base("INSERT INTO mvts_materiels (id_mvt,id_materiel,id_membre,date_emprunt) VALUES ('%s','%s','%s','%s')" % (id_mvt_calc,varToSearch,id_memb,dateretourcalc), 'insert', id_mvt_calc)
 					        # mise a jour table materiel
                             requete_base("UPDATE materiels SET statut = 'out', id_mvt = '%s' WHERE id_materiel = '%s'" % (id_mvt_calc,varToSearch), 'update', varToSearch)
+                        else:
+                            fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - WARNING : Code barre inconnu = " + str(varToSearch) + "\r")
                     except mysql.connector.Error as err:
+                            fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
                             #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
                             interruptProg()
             else:
+                print("fonction scan_windows() action = scan")
                 # premier scan
                 sys.stdout.flush()
                 r_list = [stdin_fd]
@@ -259,23 +286,28 @@ def scan_linux():
                     for line in result:
                         requete_base("SELECT id_membre FROM membres where id_membre = '%s'" % line, 'membre', line)
     except KeyboardInterrupt:
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : interruption clavier\r")
         interruptProg()
 
 def test_db():
     # procedure de verification connectivite a la base mysql
     # au lancement du programme
+    global fLogs
     global mydb
     global mycursor
+    print("fonction test_db()")
     connexionDB()
     mydb.close()
 
 def check_if_out(id_materiel):
     # procedure de verification si le materiel est OUT
     # si out ==> on le rentre
+    global fLogs
     global mydb
     global mycursor
     #print("check_if_out")
 	# verification de l'etat du materiel
+    print("fonction check_if_out()")
     try:
         connexionDB()
         mycursor.execute("SELECT id_mvt FROM materiels where id_materiel = '%s' and statut = 'out'" % id_materiel)
@@ -292,17 +324,20 @@ def check_if_out(id_materiel):
             # Materiel identifie comme sorti donc on le rentre (modification de table mvt et materiel)
             retour_materiel(id_materiel, id_mvt)
     except mysql.connector.Error as err:
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
         interruptProg()
 
 def requete_base(req, type, id):
     # procedure generique d'execution de requetes
+    global fLogs
     global id_memb
     global action
     global mydb
     global mycursor
     try:    
         if type == 'insert':
+            print("fonction requete_base() type = insert")
             connexionDB()
             mycursor.execute(req)
             mycursor.fetchone()
@@ -310,6 +345,7 @@ def requete_base(req, type, id):
             mycursor.close()
             mydb.close()
         elif type == 'update':
+            print("fonction requete_base() type = update")
             connexionDB()
             mycursor.execute(req)
             mycursor.fetchone()
@@ -317,6 +353,7 @@ def requete_base(req, type, id):
             mycursor.close()
             mydb.close()
         else:
+            print("fonction requete_base() type = autre")
             connexionDB()
             mycursor.execute(req)
             myresult = mycursor.fetchall()
@@ -325,6 +362,7 @@ def requete_base(req, type, id):
             mydb.close()
             if rc == 1:
                 if type == 'membre':
+                    print("fonction requete_base() type = membre")
                     for row in myresult:
                         id_memb = row[0]
                         action = 'emprunt'
@@ -339,13 +377,22 @@ def requete_base(req, type, id):
                 # on verifie si il ne s'agit pas de materiel qui serait sorti et qui va rentrer
                 check_if_out(id) 
     except mysql.connector.Error as err:
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
         interruptProg()
 
 def main():
+    global fLogs
     # Main - Debut du programme
+    if not path.exists(varficLogs):
+        fLogs = open(varficLogs, "w")
+    else:
+        fLogs = open(varficLogs, "a")
+    fLogs.write("#######################################################################\r")
+    fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : Lancement du programme\r")
     # controle presence fichier .bin pour mysql
     if not path.exists(ficBinMysql):
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : fichier " + ficBinMysql + " manquant\r")
         #print("Erreur fichier " + ficBinMysql + " manquant !")
         interruptProg()
     # mysql
