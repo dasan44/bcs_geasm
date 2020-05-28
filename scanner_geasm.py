@@ -8,7 +8,7 @@
 ## Depot git    : https://github.com/dasan44/bcs_geasm.git
 ##
 ##
-## Pre-req      : La solution complete est destinee à tourner sur Raspbery PI 3
+## Pre-req      : La solution complete est destinee a tourner sur Raspbery PI 3
 ##                tests sur : Raspbian kernel 4.19 - 2020-02-13-raspbian-buster.img
 ##                - MySQL server 
 ##                - python 2.7 (minimum), fonctionne sur python 3.7
@@ -16,6 +16,8 @@
 ##                - pip install mysql-connector-python
 ##                - pip install cryptography
 ##                - fichier mysql.bin
+##
+## Start        : ./scanner_geasm.py
 ##
 ####################################################################################
 ## 
