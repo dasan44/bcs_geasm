@@ -11,7 +11,12 @@ testé sur : Raspbian kernel 4.19 - 2020-02-13-raspbian-buster.img
 
 Matériel :
 - Raspberry Pi 3
-- Scanner USB (YHD
+- une alimentation pour le Raspberry Pi
+- lecteur de codes barres usb YHD-8200 (ou autre)
+- écran LCD 2004 -20x4) avec interface i2c
+- Module de convertisseur i2c 4 canaux (3.3v -> 5v)
+- cables dupont femmelle/femelle
+- un boitier en forme de bouteille de plongée que j'ai créé : boitier_scanner_geasm.stl
 
 Logiciels :
 - MySQL server 
