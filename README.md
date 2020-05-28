@@ -18,7 +18,7 @@ Matériel :
 - cables dupont femmelle/femelle
 
 Impression 3D : 
-- un boitier en forme de bouteille de plongée que j'ai créé : 3d/boitier_scanner_geasm.stl
+- un boitier en forme de bouteille de plongée que j'ai créé : impression-3d/boitier_scanner_geasm.stl
 
 Logiciels :
 - MySQL server 
