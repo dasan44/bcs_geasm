@@ -462,6 +462,10 @@ def displayOnlcdScreen(action):
 def main():
     global fLogs
     # Main - Debut du programme
+    # contole presence dossier logs
+    isdir = os.path.isdir("logs/")
+    if not isdir:
+        os.mkdir("logs")
     if not path.exists(varficLogs):
         fLogs = open(varficLogs, "w")
     else:
