@@ -1,6 +1,7 @@
 # bcs_geasm
 
 Scanner de code barre permettant le suivi et la gestion du matériel du club de plongée G.E.A.S.M. : https://www.geasm.org
+
 Emprunter un / des gilet(s) stabilisateur(s), un / des detendeur(s), une / des bouteille(s) / autre materiel appartenant au G.E.A.S.M.
 
 Source montage et librairies LCD 2004 (20x4) : http://hardware-libre.fr/2014/03/raspberry-pi-utiliser-un-lcd-4x20/
