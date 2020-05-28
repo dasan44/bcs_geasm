@@ -73,29 +73,5 @@ INSERT INTO `geasm`.`membres`(id_membre,nom,pnom,niveau,droits,date_ajout) VALUE
 INSERT INTO `geasm`.`membres`(id_membre,nom,pnom,niveau,droits,date_ajout) VALUES ('user4','nom4','pnom4','n2','admin','2020-05-17 00:00:00');
 INSERT INTO `geasm`.`membres`(id_membre,nom,pnom,niveau,droits,date_ajout) VALUES ('user5','nom5','pnom5','n3','membre','2020-05-17 00:00:00');
 INSERT INTO `geasm`.`membres`(id_membre,nom,pnom,niveau,droits,date_ajout) VALUES ('user6','nom6','pnom6','n4','membre','2020-05-17 00:00:00');
-INSERT INTO `geasm`.`membres`(id_membre,nom,pnom,niveau,droits,date_ajout) VALUES ('21-00260000223001885','sanagu','david','n3','admin','2020-05-17 00:00:00');
+INSERT INTO `geasm`.`membres`(id_membre,nom,pnom,niveau,droits,date_ajout) VALUES ('21-00260000223001885','uuuu','ppppp','n3','admin','2020-05-17 00:00:00');
 
-
-# 1) scanner le materiel pour le rentrer automatiquement
-# verifier les bases
-SELECT * FROM `geasm`.`mvts_materiels` where id_mvt = '122222228' and id_materiel = 'A001-00260000223001885';
-# doit faire 0 ligne
-SELECT * FROM `geasm`.`materiels` where id_materiel = 'A001-00260000223001885' and statut = 'out';
-# doit faire 0 ligne
-# 2) puis jouer les scenarios 
-## scenario test materiel sorti à scanner pour simuler un retour
-#  recupere un id, faire +1
-SELECT id_mvt FROM `geasm`.`mvts_materiels` ORDER BY id_mvt DESC LIMIT 1;
-# faire +1 sur l'id et le mettre dans id_mvt
-UPDATE `geasm`.`materiels` SET statut = 'out', id_mvt = '122222228' WHERE id_materiel = 'A001-00260000223001885';
-INSERT INTO `geasm`.`mvts_materiels` (id_mvt,id_materiel,id_membre,date_emprunt) VALUES ('122222228','A001-00260000223001885','KU324796-gE;!P','2020-05-19 23:35:04')
-## scenario test materiel present, scanner une carte utilisateur et 1 materiel pour le sortir
-UPDATE `geasm`.`materiels` SET statut = 'in', id_mvt = '' WHERE id_materiel = 'A001-00260000223001885';
-UPDATE `geasm`.`materiels` SET date_retour = '2020-05-19 23:35:04' where id_mvt = '122222228'
-# 3) scanner une carte membre
-# 4) scanner un materiel
-# verifier les bases
-SELECT * FROM `geasm`.`mvts_materiels` where id_mvt = '122222228' and id_materiel = 'A001-00260000223001885';
-# doit faire 1 ligne
-SELECT * FROM `geasm`.`materiels` where id_materiel = 'A001-00260000223001885' and statut = 'out';
-# doit faire 1 ligne
