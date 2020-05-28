@@ -16,7 +16,9 @@ Matériel :
 - écran LCD 2004 -20x4) avec interface i2c
 - Module de convertisseur i2c 4 canaux (3.3v -> 5v)
 - cables dupont femmelle/femelle
-- un boitier en forme de bouteille de plongée que j'ai créé : boitier_scanner_geasm.stl
+
+Impression 3D : 
+- un boitier en forme de bouteille de plongée que j'ai créé : 3d/boitier_scanner_geasm.stl
 
 Logiciels :
 - MySQL server 
