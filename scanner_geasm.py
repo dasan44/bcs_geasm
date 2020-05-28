@@ -1,18 +1,21 @@
 ####################################################################################
 ##
-## Name         : scanner_materiel_geasm.py
+## Name         : scanner_geasm.py
 ## Author       : David Sanagustin
-## Version init : 1.0
+## Version      : 1.3
 ## Date         : 05/2020
 ## Plateform    : Windows / Linux 
 ## Depot git    : https://github.com/dasan44/bcs_geasm.git
 ##
 ##
-## Pre-req      : MySQL server 
-##                python 2.7 (minimum), fonctionne sur python 3.7
-##                pip install mysql-connector-python
-##                pip install cryptography
-##                fichier mysql.bin contient le mot de passe de la base
+## Pre-req      : La solution complete est destinee à tourner sur Raspbery PI 3
+##                tests sur : Raspbian kernel 4.19 - 2020-02-13-raspbian-buster.img
+##                - MySQL server 
+##                - python 2.7 (minimum), fonctionne sur python 3.7
+##                - apt-get install python-smbus i2c-tools
+##                - pip install mysql-connector-python
+##                - pip install cryptography
+##                - fichier mysql.bin
 ##
 ####################################################################################
 ## 
@@ -23,25 +26,19 @@
 ## une / des bouteille(s) / autre materiel appartenant au G.E.A.S.M.
 ## 
 ## Pour chaque emprunt de materiel il faut scanner sa carte de membre avant !
-## 1) scanner sa carte de membre
-## 2) scanner un materiel
-## 3) scanner sa carte de membre
-## 4) scanner un autre materiel (si le meme materiel est rescanne il est alors mis 
-##    a jour (revient en stock et repart)
+##   1) scanner sa carte de membre
+##   2) scanner un materiel
+##   3) scanner sa carte de membre
+##   4) scanner un autre materiel (si le meme materiel est rescanne il est alors mis 
+##      a jour (revient en stock et repart)
+##   5) ...
+## Pour Retourner du materiel en stock il suffit simplement de scanner le dit materiel
+##   1) scanner le materiel
+##   2) ..... retour en stock
 ## 
-## Pour remettre du materiel en stock il suffit de scanner le materiel sorti
-## pas besoin de carte membre pour rentrer le materiel
-##
 ## Le materiel et les membres doivent etre connus et enregistres en base !
 ##
 ####################################################################################
-
-# Reste a faire LOG DES ERREURS !
-# Script backup MYSQL + tgz + cron
-# Script cherche wifi/connection internet + upload bakcup mysql vers geasm.org
-# Print des actions
-# enregistrer les codes barre non trouves en base (fichier inconnus.log)
-# envoyer un rapport espace disque # cron
 
 import time
 import sys
@@ -51,15 +48,17 @@ from os import path
 from datetime import date, datetime, timedelta
 import mysql.connector
 from time import sleep
+# chemin du dossier lib
+sys.path.insert(0, '/lib/')
 
 ficBinMysql='fichiersortie.bin'
-varficLogs='scann_geasm.log'
+varficLogs='logs/scanner_geasm.log'
 action='scan'
 id_memb='aucun'
 
-def interruptProg():
+def interruptProg(cause):
     global fLogs
-    displayOnlcdScreen("fin")
+    displayOnlcdScreen(cause)
     fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : Arret du programme\r")
     fLogs.close()
     #print ("Fermeture de l'application")
@@ -91,7 +90,7 @@ def connexionDB():
     except mysql.connector.Error as err:
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
-        interruptProg()
+        interruptProg("bdd")
 
 # traitement retour du materiel
 def retour_materiel(id_materiel, id_mvt):
@@ -100,8 +99,6 @@ def retour_materiel(id_materiel, id_mvt):
     global fLogs
     global mydb
     global mycursor
-    lcd.lcd_display_string("Retour du materiel :", 3)
-    lcd.lcd_display_string(id_materiel, 4)
     try:
         connexionDB()
         mycursor.execute("UPDATE materiels SET statut = 'in', id_mvt = '' WHERE id_materiel = '%s'" % id_materiel)
@@ -129,12 +126,11 @@ def retour_materiel(id_materiel, id_mvt):
         #    print("UPDATE OK")
         #else:
         #    print("ERREUR UPDATE MVT!!!")
-        lcd.lcd_display_string("Merci !", 3)
-        lcd.lcd_display_string("", 4)
+        displayOnlcdScreen("ret")
     except mysql.connector.Error as err:
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
-        interruptProg()
+        interruptProg("bdd")
 	#mettre a jour la table materiel (statut = in au lieu de out)
     #mettre a our la table mvt (date retour ...)
     #retour au mode scan initial
@@ -167,6 +163,7 @@ def scan_windows():
                     # resultat code barre = 23456
                     varToSearch = str(key_stroke).replace('[', '').replace(']','').replace('\'', '')
                     # verifier que le materiel existe dans la base
+                    print(varToSearch)
                     connexionDB()
                     try:
                         mycursor.execute("SELECT id_materiel FROM materiels where id_materiel = '%s'" % varToSearch)
@@ -198,7 +195,7 @@ def scan_windows():
                     except mysql.connector.Error as err:
                         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
                         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
-                        interruptProg()
+                        interruptProg("bdd")
                 else:
                     # premier scan
 					# suppression de caracteres inutils, probleme lies a windows
@@ -212,22 +209,11 @@ def scan_windows():
                     requete_base("SELECT id_membre FROM membres where id_membre = '" + str(varToSearch) + "'", 'membre', varToSearch)
     except KeyboardInterrupt:
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : interruption clavier\r")
-        interruptProg()
+        interruptProg("fin")
 
 def scan_linux():
     # fonction scanner sur os linux
     # fonction de base qui tourne en boucle pour scanner les codes barres
-    # import driver pour le lcd (uniquement sur linux)
-    #import lcddriver
-    #lcd = lcddriver.lcd()
-    #lcd.lcd_clear()
-    #lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
-    #lcd.lcd_display_string("--------------------", 2)
-    #lcd.lcd_display_string("Sannez votre carte", 3)
-    #lcd.lcd_display_string("pour emprunter ...", 4)
-    #sleep(5)
-    #lcd.lcd_display_string("Ou un materiel pour", 3)
-    #lcd.lcd_display_string("le rentrer en stock", 4)
     print("fonction scan_linux()")
     global fLogs
     fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : OS Linux\r")
@@ -239,6 +225,7 @@ def scan_linux():
     try:
         while True:
             if action == 'emprunt':
+                displayOnlcdScreen("usr")
                 print("fonction scan_windows() action = emprunt")
                 # ajout une entree dans la table mvts_materiels
                 # update table materiel ==> materiel = out
@@ -258,8 +245,7 @@ def scan_linux():
                         varToSearch = line
                     connexionDB()
                     try:
-                        lcd.lcd_display_string("Recherche en cours", 3)
-                        lcd.lcd_display_string("...", 4)
+                        displayOnlcdScreen("rec")
                         mycursor.execute("SELECT id_materiel FROM materiels where id_materiel = '%s'" % varToSearch)
                         myresult = mycursor.fetchall()
                         rc = mycursor.rowcount
@@ -280,19 +266,20 @@ def scan_linux():
                             for row in myresult:
                                 # incrementation pour table mouvement
                                 id_mvt_calc = int(row[0])+1
-                            lcd.lcd_display_string("Emprunt de :", 3)
-                            lcd.lcd_display_string(id_materiel, 4)
                             dateretourcalc = datetime.now().strftime("%Y-%m-%d %H:%M:%S")                            
                             requete_base("INSERT INTO mvts_materiels (id_mvt,id_materiel,id_membre,date_emprunt) VALUES ('%s','%s','%s','%s')" % (id_mvt_calc,varToSearch,id_memb,dateretourcalc), 'insert', id_mvt_calc)
 					        # mise a jour table materiel
                             requete_base("UPDATE materiels SET statut = 'out', id_mvt = '%s' WHERE id_materiel = '%s'" % (id_mvt_calc,varToSearch), 'update', varToSearch)
+                            displayOnlcdScreen("emp")
                         else:
+                            displayOnlcdScreen("nc")
                             fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - WARNING : Code barre inconnu = " + str(varToSearch) + "\r")
                     except mysql.connector.Error as err:
                             fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
                             #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
-                            interruptProg()
+                            interruptProg("bdd")
             else:
+                displayOnlcdScreen("main")
                 print("fonction scan_windows() action = scan")
                 # premier scan
                 sys.stdout.flush()
@@ -308,7 +295,7 @@ def scan_linux():
                         requete_base("SELECT id_membre FROM membres where id_membre = '%s'" % line, 'membre', line)
     except KeyboardInterrupt:
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - INFO : interruption clavier\r")
-        interruptProg()
+        interruptProg("fin")
 
 def test_db():
     # procedure de verification connectivite a la base mysql
@@ -347,7 +334,7 @@ def check_if_out(id_materiel):
     except mysql.connector.Error as err:
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
-        interruptProg()
+        interruptProg("bdd")
 
 def requete_base(req, type, id):
     # procedure generique d'execution de requetes
@@ -400,20 +387,80 @@ def requete_base(req, type, id):
     except mysql.connector.Error as err:
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : MySQL ".format(err) + "\r")
         #print("Erreur de connexion a la base mysql du GEASM: {}".format(err))
-        interruptProg()
+        interruptProg("bdd")
 
 def displayOnlcdScreen(action):
-    global lcd
-    if action == "fin":
+    # procedure affichage sur lcd2004 (20x4)
+    # import driver pour le lcd
+    try:
+        import lcddriver
+        global lcd
+        lcd = lcddriver.lcd()
         lcd.lcd_clear()
-        lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
-        lcd.lcd_display_string("--------------------", 2)
-        lcd.lcd_display_string("! PROGRAMME ARRETE !", 3)
-        lcd.lcd_display_string("--------------------", 4)
-   
+        if action == "main":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("Flash ta carte pour", 2)
+            lcd.lcd_display_string("emprunter / Flash un", 3)
+            lcd.lcd_display_string("materiel a retourner", 4)
+        if action == "fin":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("! PROGRAMME ARRETE !", 3)
+            lcd.lcd_display_string("--------------------", 4)
+        if action == "bdd":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("! PROGRAMME ARRETE !", 3)
+            lcd.lcd_display_string("!  ERREUR BDD/SQL  !", 4)
+        if action == "fic":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("! PROGRAMME ARRETE !", 3)
+            lcd.lcd_display_string("! ERREUR FIC CONF  !", 4)
+        if action == "emp":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("Materiel sorti : OK", 3)
+            lcd.lcd_display_string("", 4)
+            sleep(3)
+        if action == "rec":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("Verification code", 3)
+            lcd.lcd_display_string("barre ...", 4)
+            sleep(2)
+        if action == "nc":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("Code barre inconnu !", 3)
+            lcd.lcd_display_string("", 4)
+            sleep(3)
+        if action == "ret":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("Retour au stock : OK", 3)
+            lcd.lcd_display_string("Merci !", 4)
+            sleep(3)
+        if action == "usr":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("Carte membre : OK", 3)
+            lcd.lcd_display_string("-> Flash un materiel", 4)
+        if action == "out":
+            lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
+            lcd.lcd_display_string("--------------------", 2)
+            lcd.lcd_display_string("Materiel hors stock", 3)
+            lcd.lcd_display_string("MAJ stock ...", 4)
+            sleep(3)
+    except:
+        print("Erreur LCD : verifier logs, msg = %s" % sys.exc_info()[0])
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - msg = %s\r" % sys.exc_info()[0])
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - Verifier si l'interface i2c est bien detecte / son emplacement 'commande : sudo i2cdetect -y 1' ==> par defaut 0x27\r")
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - Ou configuration emplacement i2c dans lcddriver.py ligne 5\r")
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - Ou apt-get install python-smbus i2c-tools\r")
+
 def main():
     global fLogs
-    global lcd
     # Main - Debut du programme
     if not path.exists(varficLogs):
         fLogs = open(varficLogs, "w")
@@ -425,8 +472,7 @@ def main():
     if not path.exists(ficBinMysql):
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : fichier " + ficBinMysql + " manquant\r")
         #print("Erreur fichier " + ficBinMysql + " manquant !")
-        interruptProg()
-    # mysql
+        interruptProg("fic")
     # test de connexion a la base
     test_db()
     # controle OS
@@ -434,13 +480,7 @@ def main():
     if sys.platform.startswith('win'):
         scan_windows()
     else:
-        import lcddriver
-        lcd = lcddriver.lcd()
-        lcd.lcd_clear()
-        lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
-        lcd.lcd_display_string("Flash ta carte pour", 2)
-        lcd.lcd_display_string("emprunter. Ou un", 3)
-        lcd.lcd_display_string("materiel a retourner", 4)
+        displayOnlcdScreen("main")
         scan_linux()
 
 # Debut appel de main
