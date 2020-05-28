@@ -4,7 +4,7 @@
 ## Author       : David Sanagustin
 ## Version      : 1.3
 ## Date         : 05/2020
-## Plateform    : Windows / Linux 
+## Plateform    : Windows / Linux / Raspbian
 ## Depot git    : https://github.com/dasan44/bcs_geasm.git
 ##
 ##
