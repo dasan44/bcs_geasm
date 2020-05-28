@@ -53,7 +53,7 @@ from time import sleep
 # chemin du dossier lib
 sys.path.insert(0, '/lib/')
 
-ficBinMysql='fichiersortie.bin'
+ficBinMysql='mysql.bin'
 varficLogs='logs/scanner_geasm.log'
 action='scan'
 id_memb='aucun'
