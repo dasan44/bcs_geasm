@@ -8,6 +8,12 @@ Source montage et librairies LCD 2004 (20x4) : http://hardware-libre.fr/2014/03/
 
 Pre-req : La solution complète est destinée à tourner sur Raspbery PI 3
 testé sur : Raspbian kernel 4.19 - 2020-02-13-raspbian-buster.img
+
+Matériel :
+- Raspberry Pi 3
+- Scanner USB (YHD
+
+Logiciels :
 - MySQL server 
 - python 2.7 (minimum), fonctionne sur python 3.7
 - apt-get install python-smbus i2c-tools
