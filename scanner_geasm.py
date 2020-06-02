@@ -401,8 +401,8 @@ def displayOnlcdScreen(action):
         lcd.lcd_clear()
         if action == "main":
             lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
-            lcd.lcd_display_string("Flash ta carte pour", 2)
-            lcd.lcd_display_string("emprunter / Flash un", 3)
+            lcd.lcd_display_string("Scanne ta carte pour", 2)
+            lcd.lcd_display_string("emprunter/Scanne un", 3)
             lcd.lcd_display_string("materiel a retourner", 4)
         if action == "fin":
             lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
@@ -447,7 +447,7 @@ def displayOnlcdScreen(action):
             lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
             lcd.lcd_display_string("--------------------", 2)
             lcd.lcd_display_string("Carte membre : OK", 3)
-            lcd.lcd_display_string("-> Flash un materiel", 4)
+            lcd.lcd_display_string("->Scanne un materiel", 4)
         if action == "out":
             lcd.lcd_display_string(" - G. E. A. S. M. - ", 1)
             lcd.lcd_display_string("--------------------", 2)
@@ -457,7 +457,7 @@ def displayOnlcdScreen(action):
     except:
         print("Erreur LCD : verifier logs, msg = %s" % sys.exc_info()[0])
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - msg = %s\r" % sys.exc_info()[0])
-        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - Verifier si l'interface i2c est bien detecte / son emplacement 'commande : sudo i2cdetect -y 1' ==> par defaut 0x27\r")
+        fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - Verifier si l'interface i2c est bien detectee / son emplacement 'commande : sudo i2cdetect -y 1' ==> par defaut 0x27\r")
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - Ou configuration emplacement i2c dans lcddriver.py ligne 5\r")
         fLogs.write(datetime.now().strftime("%d-%m-%Y - %H:%M:%S") + " - ERROR : LCD - Ou apt-get install python-smbus i2c-tools\r")
 
