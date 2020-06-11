@@ -51,7 +51,7 @@ from datetime import date, datetime, timedelta
 import mysql.connector
 from time import sleep
 # chemin du dossier lib
-sys.path.insert(0, '/lib/')
+sys.path.insert(0, './lib/')
 
 ficBinMysql='mysql.bin'
 varficLogs='logs/scanner_geasm.log'
