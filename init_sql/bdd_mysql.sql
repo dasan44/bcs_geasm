@@ -7,6 +7,15 @@
 #########
 CREATE SCHEMA IF NOT EXISTS geasm;
 
+CREATE USER '[USER-A-CHANGER]' identified by '[USER-PASSWORD]';
+
+#SELECT User FROM mysql.user;
+
+grant all privileges on geasm.* to '[USER-A-CHANGER]';
+FLUSH PRIVILEGES;
+
+#SHOW GRANTS FOR '[USER-A-CHANGER]';
+
 #########
 # Tables
 #########
@@ -45,9 +54,9 @@ COMMENT = 'Table de gestion des membres';
 
 ###############################################################
 # Init data table mvts_materiels
-# permet d'obtenir un numero id_mvt pour le prochain emprunt
+# permet d obtenir un numero id_mvt pour le prochain emprunt
 ###############################################################
-INSERT INTO `geasm`.`mvt_materiels`(id_mvt,id_materiel,id_membre,date_emprunt,date_retour) VALUES ('1111111111','INIT','INIT','2020-05-01 00:00:00','2020-05-01 00:00:00');
+INSERT INTO `geasm`.`mvts_materiels`(id_mvt,id_materiel,id_membre,date_emprunt,date_retour) VALUES ('1111111111','INIT','INIT','2020-05-01 00:00:00','2020-05-01 00:00:00');
 
 
 ###############################################################

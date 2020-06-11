@@ -228,7 +228,7 @@ def scan_linux():
         while True:
             if action == 'emprunt':
                 displayOnlcdScreen("usr")
-                print("fonction scan_windows() action = emprunt")
+                print("fonction scan_linux() action = emprunt")
                 # ajout une entree dans la table mvts_materiels
                 # update table materiel ==> materiel = out
                 # reset de la variable action pour le prochain scan
@@ -282,7 +282,7 @@ def scan_linux():
                             interruptProg("bdd")
             else:
                 displayOnlcdScreen("main")
-                print("fonction scan_windows() action = scan")
+                print("fonction scan_linux() action = scan")
                 # premier scan
                 sys.stdout.flush()
                 r_list = [stdin_fd]
